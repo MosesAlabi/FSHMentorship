@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Checkout | FSHM</title>
+<link rel="stylesheet" href="styles.css"></head>
+<body>
+<main class="pg" id="co">
+  <p><a href="index.html#plans">&larr; Back to plans</a></p>
+  <h1 id="pn">Checkout</h1>
+  <p id="pp" class="sub"></p>
+  <form id="cf" novalidate>
+    <label>Full name<input id="n" autocomplete="name" required></label>
+    <label>Email address (your confirmation is sent here)<input id="e" type="email" autocomplete="email" required></label>
+    <fieldset class="pay" style="border:0;padding:0">
+      <legend style="font-weight:700;font-size:13px;margin-bottom:6px">Pay with</legend>
+      <label><input type="radio" name="m" value="flutterwave" checked> Flutterwave</label>
+      <label><input type="radio" name="m" value="raenest"> Raenest</label>
+      <label><input type="radio" name="m" value="paypal"> PayPal</label>
+      <label><input type="radio" name="m" value="card"> Credit / debit card</label>
+    </fieldset>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-weight:500"><input id="t" type="checkbox" style="width:auto;margin-top:4px"> I have read the service and refund terms.</label>
+    <button class="btn gold" type="submit">Continue to payment</button>
+    <p id="m" class="msg" role="alert"></p>
+  </form>
+  <div class="box" id="done" hidden>
+    <h2 style="font-size:24px">Your payment reference</h2>
+    <p id="ref" style="font:800 26px Fraunces,serif;color:var(--navy)"></p>
+    <p id="em"></p>
+    <p>Quote this reference in any message to FSHM. You are being redirected to the payment page.</p>
+    <a class="btn blue" id="go" href="#">Go to payment now</a>
+  </div>
+</main>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+const C=window.FSHM_CONFIG,$=s=>document.querySelector(s);
+const key=new URLSearchParams(location.search).get("plan"),plan=C.plans[key];
+if(!plan){$("#co").innerHTML='<h1>Choose a plan</h1><p>Select a mentorship plan to continue.</p><a class="btn blue" href="index.html#plans">View plans</a>'}
+else{
+  $("#pn").textContent=plan.name;$("#pp").textContent="Total: $"+plan.price.toLocaleString("en-US")+" USD";
+  $("#cf").addEventListener("submit",async ev=>{
+    ev.preventDefault();const m=$("#m"),name=$("#n").value.trim(),email=$("#e").value.trim(),method=document.querySelector("[name=m]:checked").value;
+    m.className="msg err";
+    if(name.length<2){m.textContent="Enter your full name.";return}
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){m.textContent="Enter a valid email address, like name@example.com.";return}
+    if(!$("#t").checked){m.textContent="Tick the box to confirm you have read the terms.";return}
+    const tpl=(C.payLinks[method]||{})[key];
+    if(!tpl){m.textContent="This payment method is not connected yet. Choose another method, or email FSHMentorship@outlook.com.";return}
+    const d=new Date(),ref=`FSHM-${plan.code}-${d.toISOString().slice(2,10).replace(/-/g,"")}-${Array.from(crypto.getRandomValues(new Uint8Array(4)),b=>b.toString(36).toUpperCase().padStart(2,"0")).join("").slice(0,6)}`;
+    const url=tpl.replace("{ref}",encodeURIComponent(ref)).replace("{amount}",plan.price).replace("{email}",encodeURIComponent(email));
+    let sent=false;const J=C.emailjs;
+    if(J.publicKey&&J.serviceId&&J.templateId&&window.emailjs){
+      try{await emailjs.send(J.serviceId,J.templateId,{to_name:name,to_email:email,plan:plan.name,amount:"$"+plan.price.toLocaleString("en-US")+" USD",reference:ref,date:d.toDateString()},{publicKey:J.publicKey});sent=true}catch(x){}
+    }
+    $("#cf").hidden=true;$("#done").hidden=false;$("#ref").textContent=ref;
+    $("#em").textContent=sent?`A confirmation with this reference was emailed to ${email}.`:"Save this reference. Email confirmation is not switched on yet.";
+    $("#go").href=url;setTimeout(()=>location.href=url,5000);
+  });
+}
+</script>
+</body></html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>FSHM Admin</title>
+<link rel="stylesheet" href="styles.css"></head>
+<body>
+<main class="sec adm">
+<section id="login" class="pg" style="margin:0 auto">
+  <h1>Admin login</h1>
+  <form id="lf"><label>Username<input id="u" autocomplete="username" required></label>
+  <label>Password<input id="p" type="password" autocomplete="current-password" required></label>
+  <button class="btn blue" type="submit">Log in</button><p id="lm" class="msg err" role="alert"></p></form>
+  <p><a href="index.html">Back to website</a></p>
+</section>
+
+<section id="panel" hidden>
+  <h1>Manage opportunities</h1>
+  <p class="sub">Changes here feed the featured carousel, the country filter and "Find the right graduate opportunity". Your edits show on this browser straight away. To publish them to visitors, click Download and replace <b>opportunities.js</b> in your site files.</p>
+  <form id="ef">
+    <label>University<input name="uni" required></label>
+    <label>Country<input name="country" required list="cl"></label><datalist id="cl"></datalist>
+    <label>Programme<input name="prog" required></label>
+    <label>Degree<select name="deg"><option>PhD</option><option>Master's</option><option>Research Programme</option></select></label>
+    <label>Funding<select name="fund"><option>Fully Funded</option><option>Tuition + Stipend</option><option>Research Funding</option><option>Assistantship</option></select></label>
+    <label>Study area<input name="area" required></label>
+    <label>Research focus<input name="topic"></label>
+    <label>Deadline<input name="deadline" placeholder="15 Jan 2027"></label>
+    <label>Official link (https://)<input name="url" type="url"></label>
+    <div class="bar" style="align-self:end"><button class="btn blue sm" type="submit" id="sv">Add opportunity</button><button class="btn ghost sm" type="button" id="cn" style="color:var(--navy);border-color:var(--navy)" hidden>Cancel edit</button></div>
+  </form>
+  <div style="overflow-x:auto"><table><thead><tr><th>Country</th><th>University</th><th>Programme</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+  <div class="bar">
+    <button class="btn gold sm" id="dl">Download opportunities.js</button>
+    <a class="btn blue sm" href="index.html" target="_blank">Preview site</a>
+    <button class="btn ghost sm" id="rs" style="color:var(--navy);border-color:var(--navy)">Discard draft</button>
+    <button class="btn ghost sm" id="lo" style="color:var(--navy);border-color:var(--navy)">Log out</button>
+  </div>
+</section>
+</main>
+<script src="opportunities.js"></script>
+<script>
+const SALT="fshm-admin-v1:",HASH="d71a9f33135827033e3fa982227784e77cbada88f8599a32a309a680c44a0c4e";
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sha=async s=>[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,"0")).join("");
+const show=on=>{$("#login").hidden=on;$("#panel").hidden=!on;if(on)draw()};
+
+$("#lf").addEventListener("submit",async e=>{
+  e.preventDefault();const m=$("#lm");
+  let f=+sessionStorage.getItem("fshm-f")||0,until=+sessionStorage.getItem("fshm-u")||0;
+  if(Date.now()<until){m.textContent="Too many attempts. Wait 30 seconds and try again.";return}
+  const h=await sha(SALT+$("#u").value.trim().toLowerCase()+":"+$("#p").value);
+  if(h===HASH){sessionStorage.setItem("fshm-admin","1");sessionStorage.removeItem("fshm-f");m.textContent="";show(true)}
+  else{f++;sessionStorage.setItem("fshm-f",f);if(f>=5){sessionStorage.setItem("fshm-u",Date.now()+30000);sessionStorage.setItem("fshm-f",0)}m.textContent="Username or password is incorrect."}
+});
+$("#lo").onclick=()=>{sessionStorage.removeItem("fshm-admin");$("#p").value="";show(false)};
+
+let L=null;try{L=JSON.parse(localStorage.getItem("fshm-draft"))}catch(e){}
+if(!Array.isArray(L))L=JSON.parse(JSON.stringify(window.FSHM_OPPS||[]));
+let ed=-1;
+const persist=()=>localStorage.setItem("fshm-draft",JSON.stringify(L));
+function draw(){
+  $("#tb").innerHTML=L.map((o,i)=>`<tr><td>${esc(o.country)}</td><td>${esc(o.uni)}</td><td>${esc(o.prog)}</td><td><button data-e="${i}">Edit</button> <button data-d="${i}">Delete</button></td></tr>`).join("");
+  $("#cl").innerHTML=[...new Set(L.map(o=>o.country))].sort().map(c=>`<option value="${esc(c)}">`).join("");
+}
+$("#tb").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.d!==undefined){if(confirm("Delete this opportunity?")){L.splice(+b.dataset.d,1);persist();draw()}}
+  else{ed=+b.dataset.e;const f=$("#ef");for(const k in L[ed])if(f.elements[k])f.elements[k].value=L[ed][k];$("#sv").textContent="Save changes";$("#cn").hidden=false;f.scrollIntoView()}
+});
+function reset(){ed=-1;$("#ef").reset();$("#sv").textContent="Add opportunity";$("#cn").hidden=true}
+$("#cn").onclick=reset;
+$("#ef").addEventListener("submit",e=>{
+  e.preventDefault();const o={};new FormData(e.target).forEach((v,k)=>o[k]=String(v).trim());
+  if(ed<0)L.unshift(o);else L[ed]=o;persist();draw();reset();
+});
+$("#dl").onclick=()=>{
+  const t="/* Published opportunities. Edit in admin.html, then download and replace this file. */\nwindow.FSHM_OPPS="+JSON.stringify(L,null,1)+";\n";
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/javascript"}));a.download="opportunities.js";a.click();
+};
+$("#rs").onclick=()=>{if(confirm("Discard unpublished changes and go back to the published list?")){localStorage.removeItem("fshm-draft");L=JSON.parse(JSON.stringify(window.FSHM_OPPS||[]));reset();draw()}};
+if(sessionStorage.getItem("fshm-admin")==="1")show(true);
+</script>
+</body></html>
