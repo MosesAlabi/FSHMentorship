@@ -8,7 +8,7 @@ window.FSHM_CONFIG={
     launch:{name:"FSHM Launch",price:300,code:"LCH"}
   },
   payLinks:{
-    flutterwave:{complete:"",accelerator:"",launch:""},   // Flutterwave payment links
+    flutterwave:{complete:"https://sandbox.flutterwave.com/pay/txefpatgk60l",accelerator:"https://sandbox.flutterwave.com/pay/wzqsahqvdwab",launch:"https://sandbox.flutterwave.com/pay/4yncvhtn4wiu"},   // Flutterwave payment links
     raenest:{complete:"",accelerator:"",launch:""},       // Raenest payment links
     paypal:{complete:"",accelerator:"",launch:""},        // e.g. https://www.paypal.com/ncp/payment/XXXX or paypal.me/yourname/{amount}USD
     card:{complete:"",accelerator:"",launch:""}           // credit/debit card checkout link
