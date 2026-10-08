@@ -9,9 +9,9 @@ window.FSHM_CONFIG={
   },
   payLinks:{
     flutterwave:{complete:"https://sandbox.flutterwave.com/pay/txefpatgk60l",accelerator:"https://sandbox.flutterwave.com/pay/wzqsahqvdwab",launch:"https://sandbox.flutterwave.com/pay/4yncvhtn4wiu"},   // Flutterwave payment links
-    raenest:{complete:"",accelerator:"",launch:""},       // Raenest payment links
-    paypal:{complete:"",accelerator:"",launch:""},        // e.g. https://www.paypal.com/ncp/payment/XXXX or paypal.me/yourname/{amount}USD
-    card:{complete:"",accelerator:"",launch:""}           // credit/debit card checkout link
+    //raenest:{complete:"",accelerator:"",launch:""},       // Raenest payment links
+    Paystack:{complete:"https://paystack.shop/pay/fshmcomplete",accelerator:"https://paystack.shop/pay/acelerator",launch:"https://paystack.shop/pay/launched"},        // e.g. https://www.paystack.com/ncp/payment/XXXX or paypal.me/yourname/{amount}USD
+    //card:{complete:"",accelerator:"",launch:""}           // credit/debit card checkout link
   },
   /* Confirmation email with the unique reference, sent by EmailJS (free tier, no server).
      Create a service and template at emailjs.com. Template variables: to_name, to_email, plan, amount, reference, date. */
